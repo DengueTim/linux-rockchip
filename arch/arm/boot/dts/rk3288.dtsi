@@ -1300,6 +1300,11 @@
 			uart0_rts: uart0-rts {
 				rockchip,pins = <4 19 RK_FUNC_1 &pcfg_pull_none>;
 			};
+
+			uart0_rts_gpio: uart0-rts-gpio {
+                                rockchip,pins = <4 19 RK_FUNC_1 &pcfg_pull_up>;
+                                rockchip,drive = <0>;
+                        };
 		};
 
 		uart1 {

@@ -42,6 +42,9 @@
 
 /dts-v1/;
 
+#include <dt-bindings/clock/rockchip,rk808.h>
+#include <dt-bindings/input/input.h>
+
 #include "rk3288.dtsi"
 
 / {
@@ -91,11 +94,6 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&power_led>;
 		};
-	};
-
-	sdio0_pwrseq: sdio0_pwrseq {
-		compatible = "mmc-pwrseq-simple";
-		reset-gpios = <&gpio4 28 GPIO_ACTIVE_HIGH>, <&gpio4 29 GPIO_ACTIVE_HIGH>;
 	};
 
 	vcc_sys: vsys-regulator {
@@ -162,6 +160,32 @@
 		regulator-always-on;
 		vin-supply = <&vcc_5v>;
 	};
+
+	io_domains: io-domains {
+                compatible = "rockchip,rk3288-io-voltage-domain";
+                rockchip,grf = <&grf>;
+
+                wifi-supply = <&vcca_18>;
+        };
+
+/*
+	sdio0_pwrseq: sdio0_pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&gpio4 28 GPIO_ACTIVE_HIGH>, <&gpio4 29 GPIO_ACTIVE_HIGH>;
+	};
+*/
+
+	sdio0_pwrseq: sdio0-pwrseq {
+                compatible = "mmc-pwrseq-simple";
+/*		clocks = <&cru RK808_CLKOUT1>;
+                clock-names = "ext_clock";
+                pinctrl-names = "default";
+                pinctrl-0 = <&bt_enable_l>, <&wifi_enable_h>;
+
+*/
+                reset-gpios = <&gpio4 28 GPIO_ACTIVE_LOW>, <&gpio4 26 GPIO_ACTIVE_LOW>;
+		delay = <20>;
+        };
 };
 
 &cpu0 {
@@ -203,6 +227,11 @@
 	status = "okay";
 };
 
+&gpu {
+	mali-supply = <&vdd_gpu>;
+	status = "okay";
+};
+
 &i2c0 {
 	clock-frequency = <400000>;
 	status = "okay";
@@ -214,6 +243,7 @@
 		regulator-name = "vdd_cpu";
 		regulator-min-microvolt = <850000>;
 		regulator-max-microvolt = <1350000>;
+		regulator-ramp-delay = <8000>;
 		regulator-always-on;
 		regulator-boot-on;
 		vin-supply = <&vcc_sys>;
@@ -226,6 +256,7 @@
 		regulator-name = "vdd_gpu";
 		regulator-min-microvolt = <850000>;
 		regulator-max-microvolt = <1350000>;
+		regulator-ramp-delay = <8000>;
 		regulator-always-on;
 		vin-supply = <&vcc_sys>;
 	};
@@ -304,6 +335,7 @@
 				regulator-name = "vcca_18";
 				regulator-min-microvolt = <1800000>;
 				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
 			};
 
 			vcca_33: REG8 {
@@ -366,6 +398,21 @@
 	pcfg_output_low: pcfg-output-low {
 		output-low;
 	};
+
+	pcfg_wl: pcfg-wl {
+                bias-pull-up;
+                drive-strength = <8>;
+        };
+
+        pcfg_wl_clk: pcfg-wl-clk {
+                bias-disable;
+                drive-strength = <12>;
+        };
+
+	pcfg_wl_int: pcfg-wl-int {
+                bias-pull-up;
+        };
+
 
 	act8846 {
 		pmic_vsel: pmic-vsel {
@@ -435,6 +482,37 @@
 			rockchip,pins = <0 12 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
+
+	sdio0 {
+                wifi_enable_h: wifienable-h {
+                        rockchip,pins = <4 28 RK_FUNC_GPIO &pcfg_pull_none>;
+                };
+
+                /* NOTE: mislabelled on schematic; should be bt_enable_h */
+                bt_enable_l: bt-enable-l {
+                        rockchip,pins = <4 29 RK_FUNC_GPIO &pcfg_pull_none>;
+                };
+
+                sdio0_bus4: sdio0-bus4 {
+                        rockchip,pins = <4 20 RK_FUNC_1 &pcfg_wl>,
+                                        <4 21 RK_FUNC_1 &pcfg_wl>,
+                                        <4 22 RK_FUNC_1 &pcfg_wl>,
+                                        <4 23 RK_FUNC_1 &pcfg_wl>;
+                };
+
+                sdio0_cmd: sdio0-cmd {
+                        rockchip,pins = <4 24 RK_FUNC_1 &pcfg_wl>;
+                };
+
+                sdio0_clk: sdio0-clk {
+                        rockchip,pins = <4 25 RK_FUNC_1 &pcfg_wl_clk>;
+                };
+
+                sdio0_int: sdio0-int {
+                        rockchip,pins = <4 30 RK_FUNC_1 &pcfg_wl_int>;
+              };
+
+	};
 };
 
 &saradc {
@@ -445,27 +523,41 @@
 
 
 &sdio0 {
-	#address-cells = <1>;
-	#size-cells = <0>;
+	broken-cd;
+	mmc-pwrseq = <&sdio0_pwrseq>;
+
 	bus-width = <4>;
+	pinctrl-names = "default";
+        pinctrl-0 = <&sdio0_bus4>, <&sdio0_cmd>, <&sdio0_clk>, <&sdio0_int>;
+
 	non-removable;
 	num-slots = <1>;
-	pinctrl-names = "default";
-	pinctrl-0 = <&sdio0_bus4>, <&sdio0_cmd>, <&sdio0_clk>;
-	vmmc-supply = <&vcc_18>;
-	clock-freq-min-max = <400000 50000000>;
-	status = "okay";
+	vmmc-supply = <&vcca_33>;
+        vqmmc-supply = <&vcca_18>;
 
-	mmc-pwrseq = <&sdio0_pwrseq>;
+	clock-freq-min-max = <400000 8000000>;
+
+	status = "okay";
+/*
+        cap-sd-highspeed;
+	max-frequency = <5000000>; 
+        cap-sdio-irq;
+	card-detect-delay = <100>;
+        keep-power-in-suspend;
+*/
+
+
+/*
 	brcmf: bcrmf@1 {
 		reg = <1>;
-		vmmc-supply = <&vcca_18>;
 		compatible = "brcm,bcm4329-fmac";
 		interrupt-parent = <&gpio4>;
-		interrupts = <30 IRQ_TYPE_LEVEL_HIGH>;
+		interrupts = <30 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-names = "host-wake";
 		status = "okay";
 	}; 
+*/
+
 };
 
 &sdmmc {

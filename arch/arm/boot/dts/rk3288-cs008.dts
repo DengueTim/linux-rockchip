@@ -42,6 +42,9 @@
 
 /dts-v1/;
 
+#include <dt-bindings/clock/rockchip,rk808.h>
+#include <dt-bindings/input/input.h>
+
 #include "rk3288.dtsi"
 
 / {
@@ -196,7 +199,7 @@
 };
 
 &gpu {
-	vdd-supply = <&vdd_gpu>;
+	mali-supply = <&vdd_gpu>;
 	status = "okay";
 };
 

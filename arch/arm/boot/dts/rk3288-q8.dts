@@ -535,7 +535,8 @@
 	vmmc-supply = <&vcca_33>;
         vqmmc-supply = <&vcca_18>;
 
-	clock-freq-min-max = <400000 8000000>;
+	clock-freq-min-max = <400000 10000000>;
+	clock-frequency = <8000000>;
 
 	status = "okay";
 /*

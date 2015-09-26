@@ -369,6 +369,20 @@
 		output-low;
 	};
 
+	pcfg_wl: pcfg-wl {
+                bias-pull-up;
+                drive-strength = <8>;
+        };
+
+        pcfg_wl_clk: pcfg-wl-clk {
+                bias-disable;
+                drive-strength = <8>;
+        };
+
+        pcfg_wl_int: pcfg-wl-int {
+                bias-pull-up;
+        };
+
 	act8846 {
 		pmic_vsel: pmic-vsel {
 			rockchip,pins = <7 14 RK_FUNC_GPIO &pcfg_output_low>;
@@ -431,6 +445,28 @@
 			rockchip,pins = <0 12 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
+
+	sdio0 {
+                sdio0_bus4: sdio0-bus4 {
+                        rockchip,pins = <4 20 RK_FUNC_1 &pcfg_wl>,
+                                        <4 21 RK_FUNC_1 &pcfg_wl>,
+                                        <4 22 RK_FUNC_1 &pcfg_wl>,
+                                        <4 23 RK_FUNC_1 &pcfg_wl>;
+                };
+
+                sdio0_cmd: sdio0-cmd {
+                        rockchip,pins = <4 24 RK_FUNC_1 &pcfg_wl>;
+                };
+
+                sdio0_clk: sdio0-clk {
+                        rockchip,pins = <4 25 RK_FUNC_1 &pcfg_wl_clk>;
+                };
+
+                sdio0_int: sdio0-int {
+                        rockchip,pins = <4 30 RK_FUNC_1 &pcfg_wl_int>;
+              };
+
+        };
 };
 
 &saradc {
